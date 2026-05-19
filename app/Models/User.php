@@ -2,31 +2,60 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    protected $fillable = [
+        'nom',
+        'email',
+        'password',
+        'role',
+        'tel',
+        'mfa_actif',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'mfa_actif' => 'boolean',
+        'password' => 'hashed',
+    ];
+
+    public function vendeur()
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasOne(Vendeur::class);
+    }
+
+    public function acheteur()
+    {
+        return $this->hasOne(Acheteur::class);
+    }
+
+    public function administrateur()
+    {
+        return $this->hasOne(Administrateur::class);
+    }
+
+    public function isVendeur(): bool
+    {
+        return $this->role === 'VENDEUR';
+    }
+
+    public function isAcheteur(): bool
+    {
+        return $this->role === 'ACHETEUR';
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'ADMINISTRATEUR';
     }
 }
