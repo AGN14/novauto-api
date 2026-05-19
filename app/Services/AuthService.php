@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Vendeur;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthService
@@ -62,13 +63,6 @@ class AuthService
         $user->tokens()->delete();
         $token = $user->createToken('novauto_token')->plainTextToken;
 
-        $now = now();
-        Mail::to($user->email)->send(new LoginNotificationMail(
-            $user,
-            $now->format('d/m/Y'),
-            $now->format('H:i:s')
-        ));
-
         return [
             'message' => 'Connexion reussie.',
             'token'   => $token,
@@ -79,6 +73,40 @@ class AuthService
     public function logout(User $user): void
     {
         $user->currentAccessToken()->delete();
+    }
+
+    public function forgotPassword(string $email): array
+    {
+        $status = Password::sendResetLink(['email' => $email]);
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return ['message' => 'Un lien de réinitialisation a été envoyé à votre email.'];
+        }
+
+        throw new \Exception('Impossible d\'envoyer le lien de réinitialisation.');
+    }
+
+    public function resetPassword(array $data): array
+    {
+        $user = User::where('email', $data['email'])->first();
+
+        if (!$user) {
+            throw new \Exception('Utilisateur introuvable.');
+        }
+
+        if (!Password::tokenExists($user, $data['token'])) {
+            throw new \Exception('Token invalide ou expiré.');
+        }
+
+        $user->forceFill([
+            'password' => Hash::make($data['password']),
+        ])->save();
+
+        Password::deleteToken($user);
+
+        $user->tokens()->delete();
+
+        return ['message' => 'Mot de passe réinitialisé avec succès.'];
     }
 
     private function formatUser(User $user): array

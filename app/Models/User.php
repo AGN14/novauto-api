@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -57,5 +57,10 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'ADMINISTRATEUR';
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

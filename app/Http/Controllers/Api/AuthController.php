@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\Auth\ForgotPasswordRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
@@ -55,5 +57,29 @@ class AuthController extends Controller
         return response()->json([
             'user' => $request->user()->load(['vendeur', 'acheteur'])
         ], 200);
+    }
+
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
+{
+    try {
+        $result = $this->authService->forgotPassword($request->email);
+        return response()->json($result, 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
+
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        try {
+            $result = $this->authService->resetPassword($request->validated());
+            return response()->json($result, 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
