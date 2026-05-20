@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AnnonceController;
 use App\Http\Controllers\Api\MarqueController;
+use App\Http\Controllers\Api\VinController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -26,4 +27,8 @@ Route::prefix('catalogue')->group(function () {
 Route::prefix('marques')->group(function () {
     Route::get('/',              [MarqueController::class, 'index']);
     Route::get('/{id}/modeles',  [MarqueController::class, 'modeles']);
+});
+
+Route::prefix('vin')->group(function () {
+    Route::post('/decode', [VinController::class, 'decode']);
 });
