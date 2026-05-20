@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Annonce\CreateAnnonceRequest;
+use App\Http\Requests\Annonce\UpdateAnnonceRequest;
 use App\Models\Annonce;
+use App\Services\AnnonceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AnnonceController extends Controller
 {
+    public function __construct(private AnnonceService $annonceService) {}
+
     public function index(Request $request): JsonResponse
     {
         $query = Annonce::with(['vehicule.modele.marque'])
@@ -71,5 +76,63 @@ class AnnonceController extends Controller
             ->get();
 
         return response()->json($annonces);
+    }
+
+    public function mesAnnonces(Request $request): JsonResponse
+    {
+        $vendeur = $request->user()->vendeur;
+
+        if (!$vendeur) {
+            return response()->json(['message' => 'Compte vendeur introuvable.'], 403);
+        }
+
+        $annonces = $this->annonceService->getMesAnnonces($vendeur->id);
+        return response()->json($annonces);
+    }
+
+    public function store(CreateAnnonceRequest $request): JsonResponse
+    {
+        $vendeur = $request->user()->vendeur;
+
+        if (!$vendeur) {
+            return response()->json(['message' => 'Compte vendeur introuvable.'], 403);
+        }
+
+        try {
+            $annonce = $this->annonceService->create($request->validated(), $vendeur->id);
+            return response()->json($annonce, 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function update(UpdateAnnonceRequest $request, int $id): JsonResponse
+    {
+        $annonce = Annonce::findOrFail($id);
+        $vendeur = $request->user()->vendeur;
+
+        if ($annonce->vendeur_id !== $vendeur->id) {
+            return response()->json(['message' => 'Action non autorisée.'], 403);
+        }
+
+        try {
+            $annonce = $this->annonceService->update($annonce, $request->validated());
+            return response()->json($annonce);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function destroy(Request $request, int $id): JsonResponse
+    {
+        $annonce = Annonce::findOrFail($id);
+        $vendeur = $request->user()->vendeur;
+
+        if ($annonce->vendeur_id !== $vendeur->id) {
+            return response()->json(['message' => 'Action non autorisée.'], 403);
+        }
+
+        $this->annonceService->delete($annonce);
+        return response()->json(['message' => 'Annonce supprimée avec succès.']);
     }
 }

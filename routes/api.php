@@ -19,16 +19,23 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::prefix('catalogue')->group(function () {
-    Route::get('/',          [AnnonceController::class, 'index']);
-    Route::get('/featured',  [AnnonceController::class, 'featured']);
-    Route::get('/{id}',      [AnnonceController::class, 'show']);
+    Route::get('/',         [AnnonceController::class, 'index']);
+    Route::get('/featured', [AnnonceController::class, 'featured']);
+    Route::get('/{id}',     [AnnonceController::class, 'show']);
 });
 
 Route::prefix('marques')->group(function () {
-    Route::get('/',              [MarqueController::class, 'index']);
-    Route::get('/{id}/modeles',  [MarqueController::class, 'modeles']);
+    Route::get('/',             [MarqueController::class, 'index']);
+    Route::get('/{id}/modeles', [MarqueController::class, 'modeles']);
 });
 
-Route::prefix('vin')->group(function () {
-    Route::post('/decode', [VinController::class, 'decode']);
+Route::post('/vin/decode', [VinController::class, 'decode']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('vendeur')->group(function () {
+        Route::get('/annonces',        [AnnonceController::class, 'mesAnnonces']);
+        Route::post('/annonces',       [AnnonceController::class, 'store']);
+        Route::put('/annonces/{id}',   [AnnonceController::class, 'update']);
+        Route::delete('/annonces/{id}',[AnnonceController::class, 'destroy']);
+    });
 });
