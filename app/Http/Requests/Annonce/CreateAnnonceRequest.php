@@ -23,6 +23,10 @@ class CreateAnnonceRequest extends FormRequest
             'kilometrage' => ['required', 'integer', 'min:0'],
             'modele_id'   => ['required', 'exists:modeles,id'],
             'statut_douanier' => ['required', 'in:DEDOUANE,EN_TRANSIT'],
+            'description'  => ['nullable', 'string', 'min:20'],
+            'equipements'  => ['nullable', 'array'],
+            'equipements.*'=> ['string'],
+            'ville'        => ['nullable', 'string'],
         ];
     }
 

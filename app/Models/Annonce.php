@@ -13,11 +13,15 @@ class Annonce extends Model
         'prix',
         'statut',
         'photos',
+        'description',
+        'equipements',
+        'ville',
     ];
 
     protected $casts = [
-        'photos' => 'array',
-        'prix' => 'decimal:2',
+        'photos'      => 'array',
+        'equipements' => 'array',
+        'prix'        => 'decimal:2',
     ];
 
     public function vendeur()
