@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AnnonceController;
 use App\Http\Controllers\Api\MarqueController;
 use App\Http\Controllers\Api\VinController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AdminController;
 
 Route::prefix('auth')->group(function () {
     Route::post('/register',        [AuthController::class, 'register']);
@@ -38,4 +39,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/annonces/{id}',   [AnnonceController::class, 'update']);
         Route::delete('/annonces/{id}',[AnnonceController::class, 'destroy']);
     });
+});
+
+Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
+    Route::get('/stats',                    [AdminController::class, 'stats']);
+    Route::get('/annonces',                 [AdminController::class, 'annonces']);
+    Route::get('/vendeurs',                 [AdminController::class, 'vendeurs']);
+    Route::put('/annonces/{id}',            [AdminController::class, 'updateAnnonce']);
+    Route::delete('/annonces/{id}',         [AdminController::class, 'deleteAnnonce']);
+    Route::post('/vendeurs/{id}/certifier', [AdminController::class, 'certifierVendeur']);
+    Route::post('/vendeurs/{id}/suspendre', [AdminController::class, 'suspendreVendeur']);
 });
