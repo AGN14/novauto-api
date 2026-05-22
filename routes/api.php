@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\MarqueController;
 use App\Http\Controllers\Api\VinController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\ReservationController;
+
 
 Route::prefix('auth')->group(function () {
     Route::post('/register',        [AuthController::class, 'register']);
@@ -49,4 +51,20 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::delete('/annonces/{id}',         [AdminController::class, 'deleteAnnonce']);
     Route::post('/vendeurs/{id}/certifier', [AdminController::class, 'certifierVendeur']);
     Route::post('/vendeurs/{id}/suspendre', [AdminController::class, 'suspendreVendeur']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Acheteur
+    Route::prefix('acheteur')->group(function () {
+        Route::get('/reservations',          [ReservationController::class, 'index']);
+        Route::post('/reservations',         [ReservationController::class, 'store']);
+        Route::get('/reservations/{id}',     [ReservationController::class, 'show']);
+        Route::post('/reservations/{id}/annuler', [ReservationController::class, 'cancel']);
+    });
+
+    // Vendeur
+    Route::prefix('vendeur')->group(function () {
+        Route::get('/reservations',               [ReservationController::class, 'vendeurReservations']);
+        Route::post('/reservations/{id}/confirmer', [ReservationController::class, 'confirmer']);
+    });
 });
