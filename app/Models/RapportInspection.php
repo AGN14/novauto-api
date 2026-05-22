@@ -6,9 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class RapportInspection extends Model
 {
+    protected $table = 'rapports_inspection';
+
     protected $fillable = [
         'vehicule_id',
         'garage_id',
+        'statut',
+        'date_soumission',
         'date_inspection',
         'etat_carrosserie',
         'etat_moteur',
@@ -16,8 +20,6 @@ class RapportInspection extends Model
         'etat_pneus',
         'kilometrage_verifie',
         'observations',
-        'statut',
-        'date_soumission',
         'date_validation',
     ];
 

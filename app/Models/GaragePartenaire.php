@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class GaragePartenaire extends Model
 {
+    protected $table = 'garages_partenaires';
+
     protected $fillable = [
         'nom',
         'adresse',

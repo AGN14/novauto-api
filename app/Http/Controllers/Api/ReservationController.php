@@ -25,20 +25,23 @@ class ReservationController extends Controller
     {
         $annonce = Annonce::findOrFail($request->annonce_id);
 
-        if ($annonce->statut !== 'DISPONIBLE') {
-            return response()->json(['message' => 'Ce véhicule n\'est plus disponible.'], 422);
+        if ($annonce->statut === 'RESERVEE') {
+            return response()->json(['message' => 'Ce véhicule est déjà réservé.'], 422);
         }
+
+        $typeReservation = $request->type_reservation;
 
         $reservation = Reservation::create([
             'acheteur_id'      => $request->user()->acheteur->id,
             'annonce_id'       => $request->annonce_id,
-            'montant_acompte'  => $request->montant,
+            'montant_acompte'  => $typeReservation === 'ACOMPTE' ? $request->montant : 0,
             'statut'           => 'EN_ATTENTE',
             'date_reservation' => now(),
             'date_expiration'  => now()->addHours(48),
         ]);
 
-        $annonce->update(['statut' => 'RESERVEE']);
+        // L'annonce reste DISPONIBLE — elle passera en RESERVEE uniquement
+        // après confirmation d'une réservation avec acompte
 
         return response()->json($reservation->load(['annonce.vehicule.modele.marque']), 201);
     }
@@ -57,12 +60,15 @@ class ReservationController extends Controller
         $reservation = Reservation::where('acheteur_id', $request->user()->acheteur->id)
             ->findOrFail($id);
 
-        if ($reservation->statut === 'CONFIRMEE') {
-            return response()->json(['message' => 'Impossible d\'annuler une réservation confirmée.'], 422);
+        if ($reservation->statut === 'CONFIRMEE' && $reservation->montant_acompte > 0) {
+            return response()->json(['message' => 'Impossible d\'annuler une réservation confirmée avec acompte.'], 422);
         }
 
         $reservation->update(['statut' => 'ANNULEE']);
-        $reservation->annonce->update(['statut' => 'DISPONIBLE']);
+
+        if ($reservation->annonce->statut === 'RESERVEE') {
+            $reservation->annonce->update(['statut' => 'DISPONIBLE']);
+        }
 
         return response()->json(['message' => 'Réservation annulée avec succès.']);
     }
@@ -90,6 +96,11 @@ class ReservationController extends Controller
         })->findOrFail($id);
 
         $reservation->update(['statut' => 'CONFIRMEE']);
+
+        // Bloquer l'annonce UNIQUEMENT si la réservation avait un acompte
+        if ($reservation->montant_acompte > 0) {
+            $reservation->annonce->update(['statut' => 'RESERVEE']);
+        }
 
         return response()->json(['message' => 'Réservation confirmée.']);
     }

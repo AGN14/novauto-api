@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\VinController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\ReservationController;
+use App\Http\Controllers\Api\InspectionController;
 
 
 Route::prefix('auth')->group(function () {
@@ -66,5 +67,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('vendeur')->group(function () {
         Route::get('/reservations',               [ReservationController::class, 'vendeurReservations']);
         Route::post('/reservations/{id}/confirmer', [ReservationController::class, 'confirmer']);
+    });
+});
+
+Route::get('/garages', [InspectionController::class, 'garages']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('vendeur')->group(function () {
+        Route::post('/inspections',     [InspectionController::class, 'demanderInspection']);
+        Route::get('/inspections',      [InspectionController::class, 'mesInspections']);
     });
 });

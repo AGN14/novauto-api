@@ -14,9 +14,10 @@ class CreateReservationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'annonce_id' => ['required', 'exists:annonces,id'],
-            'montant' => ['required', 'numeric', 'min:0'],
-            'message'    => ['nullable', 'string', 'max:500'],
+            'annonce_id'       => ['required', 'exists:annonces,id'],
+            'montant'          => ['nullable', 'numeric', 'min:0'],
+            'type_reservation' => ['required', 'in:VISITE,ACOMPTE'],
+            'message'          => ['nullable', 'string', 'max:500'],
         ];
     }
 }
