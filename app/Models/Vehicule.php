@@ -31,6 +31,11 @@ class Vehicule extends Model
         return $this->hasOne(Annonce::class);
     }
 
+    public function annonces()
+    {
+        return $this->hasMany(Annonce::class);
+    }
+
     public function rapportInspection()
     {
         return $this->hasOne(RapportInspection::class);

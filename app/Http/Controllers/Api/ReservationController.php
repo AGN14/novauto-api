@@ -60,17 +60,84 @@ class ReservationController extends Controller
         $reservation = Reservation::where('acheteur_id', $request->user()->acheteur->id)
             ->findOrFail($id);
 
+        // Bloquer l'annulation si acompte CONFIRMEE
         if ($reservation->statut === 'CONFIRMEE' && $reservation->montant_acompte > 0) {
             return response()->json(['message' => 'Impossible d\'annuler une réservation confirmée avec acompte.'], 422);
         }
 
+        // Permettre d'annuler une visite (montant_acompte == 0) librement
+        // Permettre d'annuler un acompte EN_ATTENTE (pas encore confirmé)
+
+        // Si déjà ANNULEE, c'est une suppression définitive
+        if ($reservation->statut === 'ANNULEE') {
+            $reservation->delete();
+            return response()->json(['message' => 'Réservation supprimée définitivement.']);
+        }
+
+        // Sinon, mettre le statut à ANNULEE
         $reservation->update(['statut' => 'ANNULEE']);
 
+        // Remettre l'annonce en DISPONIBLE si elle était RESERVEE
         if ($reservation->annonce->statut === 'RESERVEE') {
             $reservation->annonce->update(['statut' => 'DISPONIBLE']);
         }
 
         return response()->json(['message' => 'Réservation annulée avec succès.']);
+    }
+
+    public function convertirEnAcompte(Request $request, int $id): JsonResponse
+    {
+        $reservation = Reservation::where('acheteur_id', $request->user()->acheteur->id)
+            ->findOrFail($id);
+
+        // Vérifier que montant_acompte == 0 (c'est bien une visite)
+        if ($reservation->montant_acompte > 0) {
+            return response()->json(['message' => 'Cette réservation a déjà un acompte.'], 422);
+        }
+
+        // Vérifier que le statut est EN_ATTENTE ou CONFIRMEE
+        if (!in_array($reservation->statut, ['EN_ATTENTE', 'CONFIRMEE'])) {
+            return response()->json(['message' => 'Cette réservation ne peut pas être convertie.'], 422);
+        }
+
+        // Calculer 10% du prix de l'annonce
+        $montantAcompte = $reservation->annonce->prix * 0.10;
+
+        // Mettre à jour : montant_acompte = 10% du prix, statut = EN_ATTENTE
+        $reservation->update([
+            'montant_acompte' => $montantAcompte,
+            'statut' => 'EN_ATTENTE',
+        ]);
+
+        // Mettre à jour le statut de l'annonce : RESERVEE
+        $reservation->annonce->update(['statut' => 'RESERVEE']);
+
+        return response()->json([
+            'message' => 'Visite convertie en réservation avec acompte.',
+            'reservation' => $reservation->load(['annonce.vehicule.modele.marque']),
+        ]);
+    }
+
+    public function convertirEnVisite(Request $request, int $id): JsonResponse
+    {
+        $reservation = Reservation::where('acheteur_id', $request->user()->acheteur->id)
+            ->findOrFail($id);
+
+        if ($reservation->montant_acompte == 0) {
+            return response()->json(['message' => 'Cette réservation est déjà une visite.'], 422);
+        }
+
+        if ($reservation->statut === 'CONFIRMEE') {
+            return response()->json(['message' => 'Impossible de convertir une réservation confirmée.'], 422);
+        }
+
+        $reservation->update(['montant_acompte' => 0]);
+        $reservation->annonce->update(['statut' => 'DISPONIBLE']);
+
+        return response()->json([
+            'message' => 'Réservation convertie en visite.',
+            'reservation' => $reservation->load(['annonce.vehicule.modele.marque']),
+        ]);
     }
 
     public function vendeurReservations(Request $request): JsonResponse

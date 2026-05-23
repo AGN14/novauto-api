@@ -17,10 +17,13 @@ class Avis extends Model
         'commentaire',
         'signale',
         'statut',
+        'signale_par_vendeur',
+        'raison_signalement',
     ];
 
     protected $casts = [
         'signale' => 'boolean',
+        'signale_par_vendeur' => 'boolean',
         'note' => 'integer',
     ];
 

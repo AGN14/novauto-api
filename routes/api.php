@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\InspectionController;
+use App\Http\Controllers\Api\AvisController;
 
 
 Route::prefix('auth')->group(function () {
@@ -26,6 +27,7 @@ Route::prefix('catalogue')->group(function () {
     Route::get('/',         [AnnonceController::class, 'index']);
     Route::get('/featured', [AnnonceController::class, 'featured']);
     Route::get('/{id}',     [AnnonceController::class, 'show']);
+    Route::get('/{id}/avis', [AvisController::class, 'index']);
 });
 
 Route::prefix('marques')->group(function () {
@@ -52,6 +54,10 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
     Route::delete('/annonces/{id}',         [AdminController::class, 'deleteAnnonce']);
     Route::post('/vendeurs/{id}/certifier', [AdminController::class, 'certifierVendeur']);
     Route::post('/vendeurs/{id}/suspendre', [AdminController::class, 'suspendreVendeur']);
+
+    Route::get('/avis/signales',                [AvisController::class, 'avisSignales']);
+    Route::post('/avis/{id}/supprimer',         [AvisController::class, 'supprimerAvis']);
+    Route::post('/avis/{id}/rejeter-signalement', [AvisController::class, 'rejeterSignalement']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -61,12 +67,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/reservations',         [ReservationController::class, 'store']);
         Route::get('/reservations/{id}',     [ReservationController::class, 'show']);
         Route::post('/reservations/{id}/annuler', [ReservationController::class, 'cancel']);
+        Route::post('/reservations/{id}/convertir-acompte', [ReservationController::class, 'convertirEnAcompte']);
+        Route::post('/reservations/{id}/convertir-visite', [ReservationController::class, 'convertirEnVisite']);
+
+        Route::post('/avis',                 [AvisController::class, 'store']);
+        Route::get('/avis',                  [AvisController::class, 'mesAvis']);
     });
 
     // Vendeur
     Route::prefix('vendeur')->group(function () {
         Route::get('/reservations',               [ReservationController::class, 'vendeurReservations']);
         Route::post('/reservations/{id}/confirmer', [ReservationController::class, 'confirmer']);
+
+        Route::post('/avis/{id}/signaler',       [AvisController::class, 'signalerAvis']);
     });
 });
 

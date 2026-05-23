@@ -35,15 +35,16 @@ class InspectionController extends Controller
             return response()->json(['message' => 'Action non autorisée.'], 403);
         }
 
-        $existant = RapportInspection::where('vehicule_id', $annonce->vehicule_id)
-            ->whereIn('statut', ['EN_ATTENTE', 'VALIDEE'])
+        $existant = RapportInspection::where('annonce_id', $annonce->id)
+            ->whereIn('statut', ['EN_ATTENTE', 'EN_COURS', 'VALIDEE'])
             ->first();
 
         if ($existant) {
-            return response()->json(['message' => 'Une inspection est déjà en cours ou validée pour ce véhicule.'], 422);
+            return response()->json(['message' => 'Une inspection est déjà en cours ou validée pour cette annonce.'], 422);
         }
 
         $rapport = RapportInspection::create([
+            'annonce_id'      => $annonce->id,
             'vehicule_id'     => $annonce->vehicule_id,
             'garage_id'       => $request->garage_id,
             'statut'          => 'EN_ATTENTE',
@@ -60,8 +61,8 @@ class InspectionController extends Controller
     {
         $vendeur = $request->user()->vendeur;
 
-        $rapports = RapportInspection::with(['garage', 'vehicule.modele.marque'])
-            ->whereHas('vehicule.annonces', function ($q) use ($vendeur) {
+        $rapports = RapportInspection::with(['garage', 'annonce'])
+            ->whereHas('annonce', function ($q) use ($vendeur) {
                 $q->where('vendeur_id', $vendeur->id);
             })
             ->orderBy('created_at', 'desc')

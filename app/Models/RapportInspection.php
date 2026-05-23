@@ -9,6 +9,7 @@ class RapportInspection extends Model
     protected $table = 'rapports_inspection';
 
     protected $fillable = [
+        'annonce_id',
         'vehicule_id',
         'garage_id',
         'statut',
@@ -29,6 +30,11 @@ class RapportInspection extends Model
         'date_validation' => 'datetime',
         'kilometrage_verifie' => 'integer',
     ];
+
+    public function annonce()
+    {
+        return $this->belongsTo(Annonce::class);
+    }
 
     public function vehicule()
     {
