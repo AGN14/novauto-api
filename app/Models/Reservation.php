@@ -3,37 +3,28 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Reservation extends Model
 {
-        protected $fillable = [
+    protected $fillable = [
         'acheteur_id',
         'annonce_id',
-        'montant_acompte',
-        'date_reservation',
-        'date_expiration',
+        'montant_paye',
         'statut',
-        'document_reservation',
     ];
 
     protected $casts = [
-        'montant_acompte' => 'decimal:2',
-        'date_reservation' => 'datetime',
-        'date_expiration' => 'datetime',
+        'montant_paye' => 'decimal:2',
     ];
 
-    public function acheteur()
+    public function acheteur(): BelongsTo
     {
         return $this->belongsTo(Acheteur::class);
     }
 
-    public function annonce()
+    public function annonce(): BelongsTo
     {
         return $this->belongsTo(Annonce::class);
-    }
-
-    public function paiement()
-    {
-        return $this->hasOne(Paiement::class);
     }
 }

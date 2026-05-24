@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\VinController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\ReservationController;
+use App\Http\Controllers\Api\RendezVousController;
 use App\Http\Controllers\Api\InspectionController;
 use App\Http\Controllers\Api\AvisController;
 
@@ -63,23 +64,32 @@ Route::middleware(['auth:sanctum'])->prefix('admin')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     // Acheteur
     Route::prefix('acheteur')->group(function () {
-        Route::get('/reservations',          [ReservationController::class, 'index']);
-        Route::post('/reservations',         [ReservationController::class, 'store']);
-        Route::get('/reservations/{id}',     [ReservationController::class, 'show']);
-        Route::post('/reservations/{id}/annuler', [ReservationController::class, 'cancel']);
-        Route::post('/reservations/{id}/convertir-acompte', [ReservationController::class, 'convertirEnAcompte']);
-        Route::post('/reservations/{id}/convertir-visite', [ReservationController::class, 'convertirEnVisite']);
+        Route::post('/rendez-vous',                  [RendezVousController::class, 'store']);
+        Route::get('/rendez-vous',                   [RendezVousController::class, 'index']);
+        Route::get('/rendez-vous/{id}',              [RendezVousController::class, 'show']);
+        Route::post('/rendez-vous/{id}/annuler',     [RendezVousController::class, 'cancel']);
 
-        Route::post('/avis',                 [AvisController::class, 'store']);
-        Route::get('/avis',                  [AvisController::class, 'mesAvis']);
+        Route::post('/reservations',                 [ReservationController::class, 'store']);
+        Route::get('/reservations',                  [ReservationController::class, 'index']);
+        Route::get('/reservations/{id}',             [ReservationController::class, 'show']);
+        Route::post('/reservations/{id}/annuler',    [ReservationController::class, 'cancel']);
+
+        Route::post('/avis',                         [AvisController::class, 'store']);
+        Route::get('/avis',                          [AvisController::class, 'mesAvis']);
     });
 
     // Vendeur
     Route::prefix('vendeur')->group(function () {
-        Route::get('/reservations',               [ReservationController::class, 'vendeurReservations']);
-        Route::post('/reservations/{id}/confirmer', [ReservationController::class, 'confirmer']);
+        Route::get('/rendez-vous',                       [RendezVousController::class, 'vendeurRendezVous']);
+        Route::post('/rendez-vous/{id}/confirmer',       [RendezVousController::class, 'confirmer']);
+        Route::post('/rendez-vous/{id}/proposer-date',   [RendezVousController::class, 'proposerAutreDate']);
+        Route::post('/rendez-vous/{id}/annuler',         [RendezVousController::class, 'annulerVendeur']);
 
-        Route::post('/avis/{id}/signaler',       [AvisController::class, 'signalerAvis']);
+        Route::get('/reservations',                      [ReservationController::class, 'vendeurReservations']);
+        Route::post('/reservations/{id}/confirmer',      [ReservationController::class, 'confirmer']);
+        Route::post('/reservations/{id}/annuler',        [ReservationController::class, 'annulerVendeur']);
+
+        Route::post('/avis/{id}/signaler',               [AvisController::class, 'signalerAvis']);
     });
 });
 

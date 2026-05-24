@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RendezVous extends Model
 {
@@ -11,29 +12,25 @@ class RendezVous extends Model
     protected $fillable = [
         'acheteur_id',
         'annonce_id',
-        'disponibilite_id',
-        'date_heure',
-        'lieu',
+        'date_rdv',
+        'heure_rdv',
+        'message',
+        'message_vendeur',
         'statut',
-        'motif_annulation',
     ];
 
     protected $casts = [
-        'date_heure' => 'datetime',
+        'date_rdv' => 'date',
+        'heure_rdv' => 'datetime:H:i',
     ];
 
-    public function acheteur()
+    public function acheteur(): BelongsTo
     {
         return $this->belongsTo(Acheteur::class);
     }
 
-    public function annonce()
+    public function annonce(): BelongsTo
     {
         return $this->belongsTo(Annonce::class);
-    }
-
-    public function disponibilite()
-    {
-        return $this->belongsTo(Disponibilite::class);
     }
 }
