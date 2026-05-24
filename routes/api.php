@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\ReservationController;
 use App\Http\Controllers\Api\RendezVousController;
 use App\Http\Controllers\Api\InspectionController;
 use App\Http\Controllers\Api\AvisController;
+use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PaiementController;
 
 
 Route::prefix('auth')->group(function () {
@@ -91,7 +93,25 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/avis/{id}/signaler',               [AvisController::class, 'signalerAvis']);
     });
+
+    // Notifications (tous utilisateurs)
+    Route::prefix('notifications')->group(function () {
+        Route::get('/',                    [NotificationController::class, 'index']);
+        Route::get('/non-lues',            [NotificationController::class, 'nonLues']);
+        Route::post('/{id}/lue',           [NotificationController::class, 'marquerLue']);
+        Route::post('/toutes-lues',        [NotificationController::class, 'marquerToutesLues']);
+        Route::delete('/{id}',             [NotificationController::class, 'destroy']);
+    });
+
+    // Paiements (acheteurs)
+    Route::prefix('paiements')->group(function () {
+        Route::post('/initier',                     [PaiementController::class, 'initier']);
+        Route::get('/verifier/{reservationId}',     [PaiementController::class, 'verifier']);
+    });
 });
+
+// Webhook FedaPay (pas de auth) - accepte GET et POST
+Route::match(['get', 'post'], '/paiements/callback', [PaiementController::class, 'callback']);
 
 Route::get('/garages', [InspectionController::class, 'garages']);
 

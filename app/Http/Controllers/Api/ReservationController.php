@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Annonce;
 use App\Models\RendezVous;
 use App\Models\Reservation;
+use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -53,6 +54,17 @@ class ReservationController extends Controller
 
         $annonce->update(['statut' => 'RESERVEE']);
 
+        $annonceWithRelations = Annonce::with('vendeur.user', 'vehicule.modele.marque')->find($request->annonce_id);
+        $vehiculeNom = "{$annonceWithRelations->vehicule->modele->marque->nom} {$annonceWithRelations->vehicule->modele->nom}";
+
+        Notification::creer(
+            $annonceWithRelations->vendeur->user_id,
+            'Nouvelle réservation',
+            "Une réservation avec acompte pour votre {$vehiculeNom} a été effectuée.",
+            'RESERVATION',
+            '/vendeur/reservations'
+        );
+
         return response()->json($reservation->load(['annonce.vehicule.modele.marque']), 201);
     }
 
@@ -77,7 +89,8 @@ class ReservationController extends Controller
 
     public function cancel(Request $request, int $id): JsonResponse
     {
-        $reservation = Reservation::where('acheteur_id', $request->user()->acheteur->id)
+        $reservation = Reservation::with('annonce.vehicule.modele.marque', 'annonce.vendeur.user')
+            ->where('acheteur_id', $request->user()->acheteur->id)
             ->findOrFail($id);
 
         if ($reservation->statut === 'ANNULEE') {
@@ -90,6 +103,16 @@ class ReservationController extends Controller
         if ($reservation->annonce->statut === 'RESERVEE') {
             $reservation->annonce->update(['statut' => 'DISPONIBLE']);
         }
+
+        $vehiculeNom = "{$reservation->annonce->vehicule->modele->marque->nom} {$reservation->annonce->vehicule->modele->nom}";
+
+        Notification::creer(
+            $reservation->annonce->vendeur->user_id,
+            'Réservation annulée',
+            "L'acheteur a annulé sa réservation pour votre {$vehiculeNom}.",
+            'RESERVATION',
+            '/vendeur/reservations'
+        );
 
         return response()->json(['message' => 'Réservation annulée avec succès.']);
     }
@@ -112,11 +135,22 @@ class ReservationController extends Controller
     {
         $vendeur = $request->user()->vendeur;
 
-        $reservation = Reservation::whereHas('annonce', function ($q) use ($vendeur) {
-            $q->where('vendeur_id', $vendeur->id);
-        })->findOrFail($id);
+        $reservation = Reservation::with('annonce.vehicule.modele.marque', 'acheteur.user')
+            ->whereHas('annonce', function ($q) use ($vendeur) {
+                $q->where('vendeur_id', $vendeur->id);
+            })->findOrFail($id);
 
         $reservation->update(['statut' => 'CONFIRMEE']);
+
+        $vehiculeNom = "{$reservation->annonce->vehicule->modele->marque->nom} {$reservation->annonce->vehicule->modele->nom}";
+
+        Notification::creer(
+            $reservation->acheteur->user_id,
+            'Réservation confirmée',
+            "Votre réservation pour le {$vehiculeNom} a été confirmée par le vendeur.",
+            'RESERVATION',
+            '/acheteur/mes-reservations'
+        );
 
         return response()->json(['message' => 'Réservation confirmée.']);
     }

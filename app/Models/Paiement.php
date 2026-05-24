@@ -8,18 +8,14 @@ class Paiement extends Model
 {
     protected $fillable = [
         'reservation_id',
-        'acheteur_id',
+        'transaction_id',
+        'reference',
         'montant',
-        'moyen',
         'statut',
-        'reference_externe',
-        'date_transaction',
-        'recu',
     ];
 
     protected $casts = [
         'montant' => 'decimal:2',
-        'date_transaction' => 'datetime',
     ];
 
     public function reservation()
@@ -27,8 +23,4 @@ class Paiement extends Model
         return $this->belongsTo(Reservation::class);
     }
 
-    public function acheteur()
-    {
-        return $this->belongsTo(Acheteur::class);
-    }
 }

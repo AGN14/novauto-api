@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Annonce;
 use App\Models\RendezVous;
 use App\Models\Reservation;
+use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -48,6 +49,22 @@ class RendezVousController extends Controller
             'message' => $request->message,
             'statut' => 'EN_ATTENTE',
         ]);
+
+        $annonce = Annonce::with('vendeur.user', 'vehicule.modele.marque')->find($request->annonce_id);
+        $vehiculeNom = "{$annonce->vehicule->modele->marque->nom} {$annonce->vehicule->modele->nom}";
+
+        \Log::info('Creating notification for rendez-vous', [
+            'vendeur_user_id' => $annonce->vendeur->user_id,
+            'vehicule' => $vehiculeNom
+        ]);
+
+        Notification::creer(
+            $annonce->vendeur->user_id,
+            'Nouvelle demande de rendez-vous',
+            "Une demande de visite pour votre {$vehiculeNom} a été reçue.",
+            'RENDEZ_VOUS',
+            '/vendeur/reservations'
+        );
 
         return response()->json($rendezVous->load(['annonce.vehicule.modele.marque']), 201);
     }
@@ -106,11 +123,22 @@ class RendezVousController extends Controller
     {
         $vendeur = $request->user()->vendeur;
 
-        $rendezVous = RendezVous::whereHas('annonce', function ($q) use ($vendeur) {
-            $q->where('vendeur_id', $vendeur->id);
-        })->findOrFail($id);
+        $rendezVous = RendezVous::with('annonce.vehicule.modele.marque', 'acheteur.user')
+            ->whereHas('annonce', function ($q) use ($vendeur) {
+                $q->where('vendeur_id', $vendeur->id);
+            })->findOrFail($id);
 
         $rendezVous->update(['statut' => 'CONFIRME']);
+
+        $vehiculeNom = "{$rendezVous->annonce->vehicule->modele->marque->nom} {$rendezVous->annonce->vehicule->modele->nom}";
+
+        Notification::creer(
+            $rendezVous->acheteur->user_id,
+            'Rendez-vous confirmé',
+            "Votre rendez-vous pour le {$vehiculeNom} a été confirmé.",
+            'RENDEZ_VOUS',
+            '/acheteur/mes-rendez-vous'
+        );
 
         return response()->json(['message' => 'Rendez-vous confirmé.']);
     }
@@ -125,9 +153,10 @@ class RendezVousController extends Controller
 
         $vendeur = $request->user()->vendeur;
 
-        $rendezVous = RendezVous::whereHas('annonce', function ($q) use ($vendeur) {
-            $q->where('vendeur_id', $vendeur->id);
-        })->findOrFail($id);
+        $rendezVous = RendezVous::with('annonce.vehicule.modele.marque', 'acheteur.user')
+            ->whereHas('annonce', function ($q) use ($vendeur) {
+                $q->where('vendeur_id', $vendeur->id);
+            })->findOrFail($id);
 
         $rendezVous->update([
             'date_rdv' => $request->date_rdv,
@@ -136,6 +165,16 @@ class RendezVousController extends Controller
             'statut' => 'AUTRE_DATE_PROPOSEE',
         ]);
 
+        $vehiculeNom = "{$rendezVous->annonce->vehicule->modele->marque->nom} {$rendezVous->annonce->vehicule->modele->nom}";
+
+        Notification::creer(
+            $rendezVous->acheteur->user_id,
+            'Nouvelle date proposée',
+            "Le vendeur a proposé une nouvelle date pour votre rendez-vous concernant le {$vehiculeNom}.",
+            'RENDEZ_VOUS',
+            '/acheteur/mes-rendez-vous'
+        );
+
         return response()->json(['message' => 'Autre date proposée avec succès.']);
     }
 
@@ -143,11 +182,22 @@ class RendezVousController extends Controller
     {
         $vendeur = $request->user()->vendeur;
 
-        $rendezVous = RendezVous::whereHas('annonce', function ($q) use ($vendeur) {
-            $q->where('vendeur_id', $vendeur->id);
-        })->findOrFail($id);
+        $rendezVous = RendezVous::with('annonce.vehicule.modele.marque', 'acheteur.user')
+            ->whereHas('annonce', function ($q) use ($vendeur) {
+                $q->where('vendeur_id', $vendeur->id);
+            })->findOrFail($id);
 
         $rendezVous->update(['statut' => 'ANNULE']);
+
+        $vehiculeNom = "{$rendezVous->annonce->vehicule->modele->marque->nom} {$rendezVous->annonce->vehicule->modele->nom}";
+
+        Notification::creer(
+            $rendezVous->acheteur->user_id,
+            'Rendez-vous annulé',
+            "Le vendeur a annulé votre rendez-vous pour le {$vehiculeNom}.",
+            'RENDEZ_VOUS',
+            '/acheteur/mes-rendez-vous'
+        );
 
         return response()->json(['message' => 'Rendez-vous annulé.']);
     }
