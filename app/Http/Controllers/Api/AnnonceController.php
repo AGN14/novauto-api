@@ -19,6 +19,13 @@ class AnnonceController extends Controller
         $query = Annonce::with(['vehicule.modele.marque'])
             ->where('statut', 'DISPONIBLE');
 
+        // Filtre par nom de marque (depuis carrousel)
+        if ($request->has('marque') && $request->marque) {
+            $query->whereHas('vehicule.modele.marque', function ($q) use ($request) {
+                $q->where('nom', 'LIKE', '%' . $request->marque . '%');
+            });
+        }
+
         if ($request->has('marque_id') && $request->marque_id) {
             $query->whereHas('vehicule.modele', function ($q) use ($request) {
                 $q->where('marque_id', $request->marque_id);

@@ -52,12 +52,15 @@ class PaiementController extends Controller
         try {
             $vehiculeNom = "{$reservation->annonce->vehicule->modele->marque->nom} {$reservation->annonce->vehicule->modele->nom}";
 
+            $returnUrl = config('services.frontend_url', 'http://localhost:4200') . '/acheteur/paiement-retour?reservation_id=' . $reservation->id;
+
             $transaction = Transaction::create([
                 'description' => "Réservation véhicule NOVAuto - {$vehiculeNom}",
                 'amount' => (int)($reservation->montant_paye),
                 'currency' => ['iso' => 'XOF'],
                 'callback_url' => config('app.url') . '/api/paiements/callback',
-                'return_url' => config('services.frontend_url', 'http://localhost:4200') . '/acheteur/paiement-retour?reservation_id=' . $reservation->id,
+                'return_url' => $returnUrl,
+                'cancel_url' => $returnUrl, // Même URL si annulation
                 'customer' => [
                     'firstname' => $request->user()->prenom,
                     'lastname' => $request->user()->nom,
@@ -97,13 +100,17 @@ class PaiementController extends Controller
         }
     }
 
-    public function callback(Request $request): JsonResponse
+    public function callback(Request $request)
     {
         \Log::info('FedaPay callback received', $request->all());
 
         $transactionId = $request->input('id');
+        $isUserRedirect = $request->has('status'); // Si 'status' présent, c'est une redirection utilisateur GET
 
         if (!$transactionId) {
+            if ($isUserRedirect) {
+                return redirect(config('services.frontend_url') . '/acheteur/mes-reservations');
+            }
             return response()->json(['message' => 'ID de transaction manquant'], 400);
         }
 
@@ -114,6 +121,10 @@ class PaiementController extends Controller
 
             if (!$paiement) {
                 \Log::error('Paiement not found for transaction', ['transaction_id' => $transactionId]);
+
+                if ($isUserRedirect) {
+                    return redirect(config('services.frontend_url') . '/acheteur/mes-reservations');
+                }
                 return response()->json(['message' => 'Paiement introuvable'], 404);
             }
 
@@ -157,6 +168,12 @@ class PaiementController extends Controller
                 ]);
             }
 
+            // Si c'est une redirection utilisateur (GET avec status), rediriger vers frontend
+            if ($isUserRedirect) {
+                $frontendUrl = config('services.frontend_url') . '/acheteur/paiement-retour?reservation_id=' . $reservation->id;
+                return redirect($frontendUrl);
+            }
+
             return response()->json(['message' => 'Callback traité'], 200);
 
         } catch (\Exception $e) {
@@ -164,6 +181,12 @@ class PaiementController extends Controller
                 'error' => $e->getMessage(),
                 'transaction_id' => $transactionId,
             ]);
+
+            // Si c'est une redirection utilisateur, rediriger vers frontend même en cas d'erreur
+            if ($isUserRedirect && isset($reservation)) {
+                $frontendUrl = config('services.frontend_url') . '/acheteur/paiement-retour?reservation_id=' . $reservation->id;
+                return redirect($frontendUrl);
+            }
 
             return response()->json([
                 'message' => 'Erreur lors du traitement du callback',
