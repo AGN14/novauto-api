@@ -1,0 +1,95 @@
+// ============================================
+// CRÉATION DES 4 VENDEURS VIA TINKER
+// ============================================
+// Lancer : php artisan tinker
+// Puis copier-coller les commandes ci-dessous
+// ============================================
+
+// Vendeur 1 — PARTICULIER
+$user1 = App\Models\User::create([
+    'nom'      => 'Kofi Mensah',
+    'email'    => 'kofi.mensah@novauto.bj',
+    'password' => bcrypt('password123'),
+    'role'     => 'VENDEUR',
+    'tel'      => '+22997001122',
+]);
+
+App\Models\Vendeur::create([
+    'user_id'      => $user1->id,
+    'type_compte'  => 'PARTICULIER',
+    'certifie'     => false,
+]);
+
+echo "✓ Vendeur 1 créé : Kofi Mensah (PARTICULIER)\n";
+
+// ============================================
+
+// Vendeur 2 — PROFESSIONNEL
+$user2 = App\Models\User::create([
+    'nom'      => 'Adjoa Koffi',
+    'email'    => 'adjoa.koffi@novauto.bj',
+    'password' => bcrypt('password123'),
+    'role'     => 'VENDEUR',
+    'tel'      => '+22996223344',
+]);
+
+App\Models\Vendeur::create([
+    'user_id'      => $user2->id,
+    'type_compte'  => 'PROFESSIONNEL',
+    'certifie'     => false,
+]);
+
+echo "✓ Vendeur 2 créé : Adjoa Koffi (PROFESSIONNEL)\n";
+
+// ============================================
+
+// Vendeur 3 — CONCESSIONNAIRE
+$user3 = App\Models\User::create([
+    'nom'      => 'Moussa Coulibaly',
+    'email'    => 'moussa.coulibaly@novauto.bj',
+    'password' => bcrypt('password123'),
+    'role'     => 'VENDEUR',
+    'tel'      => '+22995445566',
+]);
+
+App\Models\Vendeur::create([
+    'user_id'      => $user3->id,
+    'type_compte'  => 'CONCESSIONNAIRE',
+    'certifie'     => false,
+]);
+
+echo "✓ Vendeur 3 créé : Moussa Coulibaly (CONCESSIONNAIRE)\n";
+
+// ============================================
+
+// Vendeur 4 — PARC_AUTO (certifié)
+$user4 = App\Models\User::create([
+    'nom'      => 'AutoPremium Bénin',
+    'email'    => 'contact@autopremium.bj',
+    'password' => bcrypt('password123'),
+    'role'     => 'VENDEUR',
+    'tel'      => '+22991234567',
+]);
+
+App\Models\Vendeur::create([
+    'user_id'      => $user4->id,
+    'type_compte'  => 'PARC_AUTO',
+    'certifie'     => true,
+]);
+
+echo "✓ Vendeur 4 créé : AutoPremium Bénin (PARC_AUTO, certifié)\n";
+
+// ============================================
+
+// VÉRIFICATION
+echo "\n📊 LISTE DES VENDEURS CRÉÉS :\n";
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+
+App\Models\Vendeur::with('user')->get()->each(function($v) {
+    $certif = $v->certifie ? '✓ Certifié' : '✗ Non certifié';
+    echo sprintf("  %-25s — %-20s — %s\n", $v->user->nom, $v->type_compte, $certif);
+});
+
+echo "\n✅ Création terminée !\n";
+echo "📧 Email pour tous : ***@novauto.bj\n";
+echo "🔑 Mot de passe pour tous : password123\n";

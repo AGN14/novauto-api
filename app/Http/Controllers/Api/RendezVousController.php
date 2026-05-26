@@ -61,9 +61,10 @@ class RendezVousController extends Controller
         Notification::creer(
             $annonce->vendeur->user_id,
             'Nouvelle demande de rendez-vous',
-            "Une demande de visite pour votre {$vehiculeNom} a été reçue.",
+            "a demandé un rendez-vous pour votre {$vehiculeNom}.",
             'RENDEZ_VOUS',
-            '/vendeur/reservations'
+            '/vendeur/reservations',
+            $request->user()->id  // expediteur_id = l'acheteur qui demande
         );
 
         return response()->json($rendezVous->load(['annonce.vehicule.modele.marque']), 201);
@@ -135,9 +136,10 @@ class RendezVousController extends Controller
         Notification::creer(
             $rendezVous->acheteur->user_id,
             'Rendez-vous confirmé',
-            "Votre rendez-vous pour le {$vehiculeNom} a été confirmé.",
+            "a confirmé votre rendez-vous pour le {$vehiculeNom}.",
             'RENDEZ_VOUS',
-            '/acheteur/mes-rendez-vous'
+            '/acheteur/mes-rendez-vous',
+            $request->user()->id  // expediteur_id = le vendeur qui confirme
         );
 
         return response()->json(['message' => 'Rendez-vous confirmé.']);
@@ -170,9 +172,10 @@ class RendezVousController extends Controller
         Notification::creer(
             $rendezVous->acheteur->user_id,
             'Nouvelle date proposée',
-            "Le vendeur a proposé une nouvelle date pour votre rendez-vous concernant le {$vehiculeNom}.",
+            "a proposé une nouvelle date pour votre rendez-vous concernant le {$vehiculeNom}.",
             'RENDEZ_VOUS',
-            '/acheteur/mes-rendez-vous'
+            '/acheteur/mes-rendez-vous',
+            $request->user()->id  // expediteur_id = le vendeur qui propose
         );
 
         return response()->json(['message' => 'Autre date proposée avec succès.']);
@@ -194,9 +197,10 @@ class RendezVousController extends Controller
         Notification::creer(
             $rendezVous->acheteur->user_id,
             'Rendez-vous annulé',
-            "Le vendeur a annulé votre rendez-vous pour le {$vehiculeNom}.",
+            "a annulé votre rendez-vous pour le {$vehiculeNom}.",
             'RENDEZ_VOUS',
-            '/acheteur/mes-rendez-vous'
+            '/acheteur/mes-rendez-vous',
+            $request->user()->id  // expediteur_id = le vendeur qui annule
         );
 
         return response()->json(['message' => 'Rendez-vous annulé.']);

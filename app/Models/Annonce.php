@@ -11,6 +11,7 @@ class Annonce extends Model
         'vehicule_id',
         'titre',
         'prix',
+        'montant_reservation',
         'statut',
         'photos',
         'description',
@@ -22,6 +23,7 @@ class Annonce extends Model
         'photos'      => 'array',
         'equipements' => 'array',
         'prix'        => 'decimal:2',
+        'montant_reservation' => 'decimal:2',
     ];
 
     public function vendeur()

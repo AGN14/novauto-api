@@ -16,14 +16,22 @@ class CreateAnnonceRequest extends FormRequest
         return [
             'titre'       => ['required', 'string', 'min:10', 'max:255'],
             'prix'        => ['required', 'numeric', 'min:1'],
+            'montant_reservation' => ['nullable', 'numeric', 'min:10000'],
             'photos'      => ['required', 'array', 'min:1'],
             'photos.*'    => ['required', 'url'],
             'vin'         => ['required', 'string', 'size:17'],
             'annee'       => ['required', 'integer', 'min:1990', 'max:' . (date('Y') + 1)],
             'kilometrage' => ['required', 'integer', 'min:0'],
-            'modele_id'   => ['required', 'exists:modeles,id'],
+
+            // Données VIN pour créer automatiquement marque/modèle
+            'marque'      => ['required', 'string', 'max:100'],
+            'modele'      => ['nullable', 'string', 'max:100'],
+            'carburant'   => ['nullable', 'string', 'max:50'],
+            'transmission'=> ['nullable', 'string', 'max:50'],
+            'pays_origine'=> ['nullable', 'string', 'max:100'],
+
             'statut_douanier' => ['required', 'in:DEDOUANE,EN_TRANSIT'],
-            'description'  => ['nullable', 'string', 'min:20'],
+            'description'  => ['nullable', 'string'],
             'equipements'  => ['nullable', 'array'],
             'equipements.*'=> ['string'],
             'ville'        => ['nullable', 'string'],

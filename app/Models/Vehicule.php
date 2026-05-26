@@ -13,6 +13,7 @@ class Vehicule extends Model
         'kilometrage',
         'statut_douanier',
         'vin_verifie',
+        'pays_origine',
     ];
 
     protected $casts = [

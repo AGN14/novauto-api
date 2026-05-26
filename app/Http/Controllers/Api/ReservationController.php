@@ -60,9 +60,10 @@ class ReservationController extends Controller
         Notification::creer(
             $annonceWithRelations->vendeur->user_id,
             'Nouvelle réservation',
-            "Une réservation avec acompte pour votre {$vehiculeNom} a été effectuée.",
+            "a effectué une réservation avec acompte pour votre {$vehiculeNom}.",
             'RESERVATION',
-            '/vendeur/reservations'
+            '/vendeur/reservations',
+            $request->user()->id  // expediteur_id = l'acheteur qui réserve
         );
 
         return response()->json($reservation->load(['annonce.vehicule.modele.marque']), 201);

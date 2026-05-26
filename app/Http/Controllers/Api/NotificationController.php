@@ -12,6 +12,7 @@ class NotificationController extends Controller
     public function index(Request $request): JsonResponse
     {
         $notifications = Notification::where('destinataire_id', $request->user()->id)
+            ->with(['expediteur.acheteur', 'expediteur.vendeur'])
             ->orderBy('created_at', 'desc')
             ->limit(20)
             ->get();

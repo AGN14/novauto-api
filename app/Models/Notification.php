@@ -9,6 +9,7 @@ class Notification extends Model
 {
     protected $fillable = [
         'destinataire_id',
+        'expediteur_id',
         'titre',
         'message',
         'type',
@@ -33,10 +34,16 @@ class Notification extends Model
         return $this->belongsTo(User::class, 'destinataire_id');
     }
 
-    public static function creer(int $userId, string $titre, string $message, string $type, ?string $lien = null): self
+    public function expediteur(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'expediteur_id');
+    }
+
+    public static function creer(int $userId, string $titre, string $message, string $type, ?string $lien = null, ?int $expediteurId = null): self
     {
         return self::create([
             'destinataire_id' => $userId,
+            'expediteur_id' => $expediteurId,
             'titre' => $titre,
             'message' => $message,
             'type' => $type,

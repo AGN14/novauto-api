@@ -10,6 +10,8 @@ class Modele extends Model
         'marque_id',
         'nom',
         'type_carrosserie',
+        'carburant',
+        'transmission',
     ];
 
     public function marque()
