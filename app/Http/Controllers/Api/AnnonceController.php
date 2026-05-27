@@ -16,7 +16,7 @@ class AnnonceController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $query = Annonce::with(['vehicule.modele.marque'])
+        $query = Annonce::with(['vehicule.modele.marque', 'vehicule.rapportInspection'])
             ->where('statut', 'DISPONIBLE');
 
         // Filtre par nom de marque (depuis carrousel)
@@ -68,6 +68,7 @@ class AnnonceController extends Controller
     {
         $annonce = Annonce::with([
             'vehicule.modele.marque',
+            'vehicule.rapportInspection.garage',
             'vendeur.user',
         ])->findOrFail($id);
 
@@ -76,7 +77,7 @@ class AnnonceController extends Controller
 
     public function featured(): JsonResponse
     {
-        $annonces = Annonce::with(['vehicule.modele.marque'])
+        $annonces = Annonce::with(['vehicule.modele.marque', 'vehicule.rapportInspection'])
             ->where('statut', 'DISPONIBLE')
             ->orderBy('created_at', 'desc')
             ->limit(6)

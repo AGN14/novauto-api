@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\InspectionController;
 use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaiementController;
+use App\Http\Controllers\Api\GarageAuthController;
 
 
 Route::prefix('auth')->group(function () {
@@ -57,6 +58,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::delete('/annonces/{id}',         [AdminController::class, 'deleteAnnonce']);
     Route::post('/vendeurs/{id}/certifier', [AdminController::class, 'certifierVendeur']);
     Route::post('/vendeurs/{id}/suspendre', [AdminController::class, 'suspendreVendeur']);
+
+    Route::get('/garages',                  [AdminController::class, 'garages']);
+    Route::post('/garages/{id}/certifier',  [AdminController::class, 'certifierGarage']);
+    Route::post('/garages/{id}/suspendre',  [AdminController::class, 'suspendreGarage']);
 
     Route::get('/avis/signales',                [AvisController::class, 'avisSignales']);
     Route::post('/avis/{id}/supprimer',         [AvisController::class, 'supprimerAvis']);
@@ -114,6 +119,23 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::match(['get', 'post'], '/paiements/callback', [PaiementController::class, 'callback']);
 
 Route::get('/garages', [InspectionController::class, 'garages']);
+
+// Routes Garages Partenaires
+Route::prefix('garage')->group(function () {
+    // Authentification (public)
+    Route::post('/login', [GarageAuthController::class, 'login']);
+
+    // Routes protégées garage
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/me',      [GarageAuthController::class, 'me']);
+        Route::post('/logout', [GarageAuthController::class, 'logout']);
+
+        // Gestion des inspections
+        Route::get('/inspections', [InspectionController::class, 'demandesEnAttente']);
+        Route::post('/inspections/{id}/soumettre', [InspectionController::class, 'soumettreRapport']);
+        Route::post('/inspections/{id}/rejeter', [InspectionController::class, 'rejeterInspection']);
+    });
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('vendeur')->group(function () {

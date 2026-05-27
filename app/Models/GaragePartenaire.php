@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
-class GaragePartenaire extends Model
+class GaragePartenaire extends Authenticatable
 {
+    use HasApiTokens;
+
     protected $table = 'garages_partenaires';
 
     protected $fillable = [
@@ -13,14 +17,33 @@ class GaragePartenaire extends Model
         'adresse',
         'telephone',
         'ville',
+        'email',
+        'password',
         'agree',
+        'certifie',
         'date_agrement',
+        'date_certification',
+        'prix_inspection',
+        'photo_profil',
+    ];
+
+    protected $hidden = [
+        'password',
     ];
 
     protected $casts = [
         'agree' => 'boolean',
+        'certifie' => 'boolean',
         'date_agrement' => 'datetime',
+        'date_certification' => 'datetime',
+        'prix_inspection' => 'decimal:2',
+        'password' => 'hashed',
     ];
+
+    public function getAuthPassword()
+    {
+        return $this->password;
+    }
 
     public function rapportsInspection()
     {
