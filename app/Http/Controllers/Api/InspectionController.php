@@ -137,11 +137,12 @@ class InspectionController extends Controller
 
         // Notifier le vendeur
         Notification::create([
-            'user_id' => $rapport->annonce->vendeur->user_id,
-            'titre'   => 'Inspection terminée',
-            'message' => "Votre véhicule a été inspecté par {$garage->nom}.",
-            'lien'    => "/vendeur/annonces/{$rapport->annonce_id}",
-            'lu'      => false,
+            'destinataire_id' => $rapport->annonce->vendeur->user_id,
+            'type'            => 'RAPPORT_VALIDE',
+            'titre'           => 'Inspection terminée',
+            'message'         => "Votre véhicule a été inspecté par {$garage->nom}.",
+            'lien'            => "/vendeur/annonces/{$rapport->annonce_id}",
+            'lu'              => false,
         ]);
 
         return response()->json([
@@ -179,11 +180,12 @@ class InspectionController extends Controller
 
         // Notifier le vendeur
         Notification::create([
-            'user_id' => $rapport->annonce->vendeur->user_id,
-            'titre'   => 'Inspection refusée',
-            'message' => "L'inspection de votre véhicule a été refusée par {$garage->nom}. Motif : {$validated['motif']}",
-            'lien'    => "/vendeur/annonces/{$rapport->annonce_id}",
-            'lu'      => false,
+            'destinataire_id' => $rapport->annonce->vendeur->user_id,
+            'type'            => 'RAPPORT_SOUMIS',
+            'titre'           => 'Inspection refusée',
+            'message'         => "L'inspection de votre véhicule a été refusée par {$garage->nom}. Motif : {$validated['motif']}",
+            'lien'            => "/vendeur/annonces/{$rapport->annonce_id}",
+            'lu'              => false,
         ]);
 
         return response()->json([
