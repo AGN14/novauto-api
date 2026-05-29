@@ -7,6 +7,7 @@ use App\Models\Annonce;
 use App\Models\RendezVous;
 use App\Models\Reservation;
 use App\Models\Notification;
+use App\Models\Disponibilite;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -41,14 +42,32 @@ class RendezVousController extends Controller
             return response()->json(['message' => 'Vous avez déjà une réservation pour ce véhicule.'], 422);
         }
 
+        // Trouver la disponibilité correspondante
+        $annonce = Annonce::findOrFail($request->annonce_id);
+        $disponibilite = Disponibilite::where('vendeur_id', $annonce->vendeur_id)
+            ->where('jour', $request->date_rdv)
+            ->where('heure_debut', $request->heure_rdv)
+            ->where('statut', 'LIBRE')
+            ->first();
+
+        if (!$disponibilite) {
+            return response()->json([
+                'message' => 'Ce créneau n\'est plus disponible'
+            ], 422);
+        }
+
         $rendezVous = RendezVous::create([
             'acheteur_id' => $acheteurId,
             'annonce_id' => $request->annonce_id,
+            'disponibilite_id' => $disponibilite->id,
             'date_rdv' => $request->date_rdv,
             'heure_rdv' => $request->heure_rdv,
             'message' => $request->message,
             'statut' => 'EN_ATTENTE',
         ]);
+
+        // Marquer la disponibilité comme OCCUPEE
+        $disponibilite->update(['statut' => 'OCCUPE']);
 
         $annonce = Annonce::with('vendeur.user', 'vehicule.modele.marque')->find($request->annonce_id);
         $vehiculeNom = "{$annonce->vehicule->modele->marque->nom} {$annonce->vehicule->modele->nom}";
@@ -101,6 +120,14 @@ class RendezVousController extends Controller
         }
 
         $rendezVous->update(['statut' => 'ANNULE']);
+
+        // Libérer la disponibilité si elle existe
+        if ($rendezVous->disponibilite_id) {
+            $disponibilite = Disponibilite::find($rendezVous->disponibilite_id);
+            if ($disponibilite) {
+                $disponibilite->update(['statut' => 'LIBRE']);
+            }
+        }
 
         return response()->json(['message' => 'Rendez-vous annulé avec succès.']);
     }
@@ -191,6 +218,14 @@ class RendezVousController extends Controller
             })->findOrFail($id);
 
         $rendezVous->update(['statut' => 'ANNULE']);
+
+        // Libérer la disponibilité si elle existe
+        if ($rendezVous->disponibilite_id) {
+            $disponibilite = Disponibilite::find($rendezVous->disponibilite_id);
+            if ($disponibilite) {
+                $disponibilite->update(['statut' => 'LIBRE']);
+            }
+        }
 
         $vehiculeNom = "{$rendezVous->annonce->vehicule->modele->marque->nom} {$rendezVous->annonce->vehicule->modele->nom}";
 

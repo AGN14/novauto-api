@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\AvisController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaiementController;
 use App\Http\Controllers\Api\GarageAuthController;
+use App\Http\Controllers\Api\DisponibiliteController;
 
 
 Route::prefix('auth')->group(function () {
@@ -32,6 +33,7 @@ Route::prefix('catalogue')->group(function () {
     Route::get('/featured', [AnnonceController::class, 'featured']);
     Route::get('/{id}',     [AnnonceController::class, 'show']);
     Route::get('/{id}/avis', [AvisController::class, 'index']);
+    Route::get('/{annonceId}/disponibilites', [DisponibiliteController::class, 'disponibilitesParAnnonce']);
 });
 
 Route::prefix('marques')->group(function () {
@@ -97,6 +99,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/reservations/{id}/annuler',        [ReservationController::class, 'annulerVendeur']);
 
         Route::post('/avis/{id}/signaler',               [AvisController::class, 'signalerAvis']);
+
+        // Disponibilités
+        Route::get('/disponibilites',                    [DisponibiliteController::class, 'vendeurDisponibilites']);
+        Route::post('/disponibilites',                   [DisponibiliteController::class, 'creerDisponibilite']);
+        Route::delete('/disponibilites/{id}',            [DisponibiliteController::class, 'supprimerDisponibilite']);
     });
 
     // Notifications (tous utilisateurs)
@@ -134,8 +141,15 @@ Route::prefix('garage')->group(function () {
         Route::get('/inspections', [InspectionController::class, 'demandesEnAttente']);
         Route::post('/inspections/{id}/soumettre', [InspectionController::class, 'soumettreRapport']);
         Route::post('/inspections/{id}/rejeter', [InspectionController::class, 'rejeterInspection']);
+
+        // Disponibilités garage
+        Route::get('/disponibilites',     [DisponibiliteController::class, 'garageDisponibilites']);
+        Route::post('/disponibilites',    [DisponibiliteController::class, 'creerDisponibiliteGarage']);
     });
 });
+
+// Disponibilités garage (public - pour vendeurs)
+Route::get('/garages/{id}/disponibilites', [DisponibiliteController::class, 'disponibilitesGaragePublic']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('vendeur')->group(function () {

@@ -49,4 +49,9 @@ class GaragePartenaire extends Authenticatable
     {
         return $this->hasMany(RapportInspection::class, 'garage_id');
     }
+
+    public function disponibilites()
+    {
+        return $this->hasMany(DisponibiliteGarage::class, 'garage_id');
+    }
 }
