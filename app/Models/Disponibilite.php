@@ -1,9 +1,6 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
-
 class Disponibilite extends Model
 {
     protected $fillable = [
@@ -13,16 +10,13 @@ class Disponibilite extends Model
         'heure_fin',
         'statut',
     ];
-
     protected $casts = [
-        'jour' => 'date',
+        'jour' => 'date:Y-m-d',
     ];
-
     public function vendeur()
     {
         return $this->belongsTo(Vendeur::class);
     }
-
     public function rendezVous()
     {
         return $this->hasOne(RendezVous::class);

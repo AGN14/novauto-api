@@ -103,6 +103,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // Disponibilités
         Route::get('/disponibilites',                    [DisponibiliteController::class, 'vendeurDisponibilites']);
         Route::post('/disponibilites',                   [DisponibiliteController::class, 'creerDisponibilite']);
+        Route::post('/disponibilites/batch',             [DisponibiliteController::class, 'creerDisponibilitesBatch']);
+        Route::put('/disponibilites/{id}',               [DisponibiliteController::class, 'modifierDisponibilite']);
         Route::delete('/disponibilites/{id}',            [DisponibiliteController::class, 'supprimerDisponibilite']);
     });
 

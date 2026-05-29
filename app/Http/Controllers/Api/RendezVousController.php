@@ -15,12 +15,16 @@ class RendezVousController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
+        \Log::info('RendezVous store - Données reçues:', $request->all());
+
         $request->validate([
             'annonce_id' => 'required|exists:annonces,id',
             'date_rdv' => 'required|date|after_or_equal:today',
             'heure_rdv' => 'required|date_format:H:i',
             'message' => 'nullable|string|max:500',
         ]);
+
+        \Log::info('RendezVous store - Validation passée');
 
         $acheteurId = $request->user()->acheteur->id;
 
