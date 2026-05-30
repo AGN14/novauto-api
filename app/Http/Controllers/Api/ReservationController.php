@@ -16,6 +16,8 @@ class ReservationController extends Controller
     {
         $request->validate([
             'annonce_id' => 'required|exists:annonces,id',
+            'date_rdv' => 'nullable|date',
+            'heure_rdv' => 'nullable|date_format:H:i:s',
         ]);
 
         $annonce = Annonce::findOrFail($request->annonce_id);
@@ -49,6 +51,8 @@ class ReservationController extends Controller
             'acheteur_id' => $acheteurId,
             'annonce_id' => $request->annonce_id,
             'montant_paye' => $montantReservation,
+            'date_rdv' => $request->date_rdv,
+            'heure_rdv' => $request->heure_rdv,
             'statut' => 'EN_ATTENTE',
         ]);
 

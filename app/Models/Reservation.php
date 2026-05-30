@@ -11,6 +11,8 @@ class Reservation extends Model
         'acheteur_id',
         'annonce_id',
         'montant_paye',
+        'date_rdv',
+        'heure_rdv',
         'statut',
     ];
 
