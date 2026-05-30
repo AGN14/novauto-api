@@ -147,6 +147,8 @@ Route::prefix('garage')->group(function () {
         // Disponibilités garage
         Route::get('/disponibilites',     [DisponibiliteController::class, 'garageDisponibilites']);
         Route::post('/disponibilites',    [DisponibiliteController::class, 'creerDisponibiliteGarage']);
+        Route::post('/disponibilites/batch', [DisponibiliteController::class, 'creerDisponibilitesGarageBatch']);
+        Route::delete('/disponibilites/{id}', [DisponibiliteController::class, 'supprimerDisponibiliteGarage']);
     });
 });
 

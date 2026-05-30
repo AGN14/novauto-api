@@ -12,6 +12,8 @@ class RapportInspection extends Model
         'annonce_id',
         'vehicule_id',
         'garage_id',
+        'date_rdv',
+        'heure_rdv',
         'statut',
         'date_soumission',
         'date_inspection',

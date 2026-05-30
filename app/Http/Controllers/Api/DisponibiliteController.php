@@ -256,6 +256,66 @@ class DisponibiliteController extends Controller
     }
 
     /**
+     * Créer plusieurs disponibilités en lot (garage)
+     */
+    public function creerDisponibilitesGarageBatch(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'jour' => 'required|date|after_or_equal:today',
+            'creneaux' => 'required|array|min:1',
+            'creneaux.*.heure_debut' => 'required|date_format:H:i',
+            'creneaux.*.heure_fin' => 'required|date_format:H:i',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $garage = $request->user();
+        $created = [];
+        $errors = [];
+
+        foreach ($request->creneaux as $index => $creneau) {
+            if ($creneau['heure_debut'] >= $creneau['heure_fin']) {
+                $errors[] = "Créneau " . ($index + 1) . " : l'heure de fin doit être après l'heure de début";
+                continue;
+            }
+
+            $conflit = DisponibiliteGarage::where('garage_id', $garage->id)
+                ->where('jour', $request->jour)
+                ->where(function ($query) use ($creneau) {
+                    $query->where(function ($q) use ($creneau) {
+                        $q->where('heure_debut', '<', $creneau['heure_fin'])
+                          ->where('heure_fin', '>', $creneau['heure_debut']);
+                    });
+                })
+                ->exists();
+
+            if ($conflit) {
+                $errors[] = "Créneau " . ($index + 1) . " ({$creneau['heure_debut']} - {$creneau['heure_fin']}) : conflit avec un créneau existant";
+                continue;
+            }
+
+            $disponibilite = DisponibiliteGarage::create([
+                'garage_id' => $garage->id,
+                'jour' => $request->jour,
+                'heure_debut' => $creneau['heure_debut'],
+                'heure_fin' => $creneau['heure_fin'],
+                'statut' => 'LIBRE'
+            ]);
+
+            $created[] = $disponibilite;
+        }
+
+        return response()->json([
+            'created' => $created,
+            'errors' => $errors,
+            'success_count' => count($created),
+            'error_count' => count($errors)
+        ], count($created) > 0 ? 201 : 422);
+    }
+
+    /**
      * Créer une disponibilité (garage)
      */
     public function creerDisponibiliteGarage(Request $request)
@@ -315,5 +375,66 @@ class DisponibiliteController extends Controller
             ->get();
 
         return response()->json($disponibilites);
+    }
+
+    /**
+     * Marquer un créneau garage comme OCCUPE
+     */
+    public function occuperCreneauGarage(int $garageId, string $jour, string $heureDebut)
+    {
+        $disponibilite = DisponibiliteGarage::where('garage_id', $garageId)
+            ->where('jour', $jour)
+            ->where('heure_debut', $heureDebut)
+            ->where('statut', 'LIBRE')
+            ->first();
+
+        if ($disponibilite) {
+            $disponibilite->update(['statut' => 'OCCUPE']);
+            return $disponibilite;
+        }
+
+        return null;
+    }
+
+    /**
+     * Libérer un créneau garage
+     */
+    public function libererCreneauGarage(int $garageId, string $jour, string $heureDebut)
+    {
+        $disponibilite = DisponibiliteGarage::where('garage_id', $garageId)
+            ->where('jour', $jour)
+            ->where('heure_debut', $heureDebut)
+            ->where('statut', 'OCCUPE')
+            ->first();
+
+        if ($disponibilite) {
+            $disponibilite->update(['statut' => 'LIBRE']);
+            return $disponibilite;
+        }
+
+        return null;
+    }
+
+    public function supprimerDisponibiliteGarage(Request $request, int $id)
+    {
+        $garage = $request->user();
+
+        $disponibilite = DisponibiliteGarage::where('id', $id)
+            ->where('garage_id', $garage->id)
+            ->first();
+
+        if (!$disponibilite) {
+            return response()->json(['message' => 'Disponibilité non trouvée'], 404);
+        }
+
+        if ($disponibilite->statut === 'OCCUPE') {
+            return response()->json([
+                'message' => 'Impossible de supprimer un créneau occupé'
+            ], 422);
+        }
+
+        $disponibilite->delete();
+
+        return response()->json(['message' => 'Disponibilité supprimée avec succès']);
     }
 }

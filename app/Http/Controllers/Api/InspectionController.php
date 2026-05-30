@@ -28,6 +28,8 @@ class InspectionController extends Controller
         $request->validate([
             'annonce_id' => ['required', 'exists:annonces,id'],
             'garage_id'  => ['required', 'exists:garages_partenaires,id'],
+            'date_rdv'   => ['nullable', 'date'],
+            'heure_rdv'  => ['nullable', 'date_format:H:i:s'],
         ]);
 
         $annonce = Annonce::findOrFail($request->annonce_id);
@@ -49,9 +51,21 @@ class InspectionController extends Controller
             'annonce_id'      => $annonce->id,
             'vehicule_id'     => $annonce->vehicule_id,
             'garage_id'       => $request->garage_id,
+            'date_rdv'        => $request->date_rdv,
+            'heure_rdv'       => $request->heure_rdv,
             'statut'          => 'EN_ATTENTE',
             'date_soumission' => now(),
         ]);
+
+        // Marquer le créneau comme occupé si date/heure fournis
+        if ($request->date_rdv && $request->heure_rdv) {
+            $disponibiliteController = new DisponibiliteController();
+            $disponibiliteController->occuperCreneauGarage(
+                $request->garage_id,
+                $request->date_rdv,
+                $request->heure_rdv
+            );
+        }
 
         return response()->json([
             'message' => 'Demande d\'inspection envoyée avec succès.',
@@ -177,6 +191,16 @@ class InspectionController extends Controller
             'observations' => $validated['motif'],
             'date_validation' => now(),
         ]);
+
+        // Libérer le créneau si date/heure existent
+        if ($rapport->date_rdv && $rapport->heure_rdv) {
+            $disponibiliteController = new DisponibiliteController();
+            $disponibiliteController->libererCreneauGarage(
+                $rapport->garage_id,
+                $rapport->date_rdv,
+                $rapport->heure_rdv
+            );
+        }
 
         // Notifier le vendeur
         Notification::create([
