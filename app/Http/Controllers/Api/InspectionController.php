@@ -123,6 +123,13 @@ class InspectionController extends Controller
             ], 422);
         }
 
+        // Vérifier que la présence du vendeur est confirmée
+        if (!$rapport->presence_confirmee) {
+            return response()->json([
+                'message' => 'La présence du vendeur doit être confirmée avant de soumettre le rapport.'
+            ], 422);
+        }
+
         $validated = $request->validate([
             'etat_carrosserie'    => ['required', 'in:EXCELLENT,BON,MOYEN,MAUVAIS'],
             'etat_moteur'         => ['required', 'in:EXCELLENT,BON,MOYEN,MAUVAIS'],
@@ -130,6 +137,8 @@ class InspectionController extends Controller
             'etat_pneus'          => ['required', 'in:EXCELLENT,BON,MOYEN,MAUVAIS'],
             'kilometrage_verifie' => ['required', 'integer', 'min:0'],
             'observations'        => ['nullable', 'string', 'max:2000'],
+            'photos'              => ['required', 'array', 'min:2'],
+            'photos.*'            => ['required', 'string'],
         ]);
 
         // Mettre à jour le rapport
@@ -140,6 +149,7 @@ class InspectionController extends Controller
             'etat_pneus'          => $validated['etat_pneus'],
             'kilometrage_verifie' => $validated['kilometrage_verifie'],
             'observations'        => $validated['observations'] ?? null,
+            'photos_inspection'   => $validated['photos'],
             'statut'              => 'VALIDEE',
             'date_inspection'     => now(),
             'date_validation'     => now(),
@@ -162,6 +172,113 @@ class InspectionController extends Controller
         return response()->json([
             'message' => 'Rapport d\'inspection soumis avec succès.',
             'rapport' => $rapport->fresh(['garage', 'annonce.vehicule']),
+        ]);
+    }
+
+    /**
+     * Garage génère un code de présence
+     */
+    public function garageGenererCode(Request $request, int $id): JsonResponse
+    {
+        $garage = $request->user();
+
+        $rapport = RapportInspection::with(['annonce.vendeur.user'])
+            ->where('garage_id', $garage->id)
+            ->findOrFail($id);
+
+        if ($rapport->statut !== 'EN_ATTENTE') {
+            return response()->json([
+                'message' => 'Cette inspection n\'est plus en attente.'
+            ], 422);
+        }
+
+        // Générer un code aléatoire de 6 caractères alphanumériques
+        $code = strtoupper(substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), 0, 6));
+
+        $now = now();
+        $expireAt = $now->copy()->addMinutes(15);
+
+        $rapport->update([
+            'code_presence' => $code,
+            'code_genere_at' => $now,
+            'code_expire_at' => $expireAt,
+        ]);
+
+        // Notifier le vendeur
+        Notification::create([
+            'destinataire_id' => $rapport->annonce->vendeur->user_id,
+            'type' => 'CODE_PRESENCE',
+            'titre' => 'Code de présence généré',
+            'message' => "Le garage {$garage->nom} a généré un code de présence : {$code}. Confirmez votre présence depuis votre espace vendeur.",
+            'lien' => "/vendeur/inspections",
+            'lu' => false,
+        ]);
+
+        return response()->json([
+            'message' => 'Code de présence généré avec succès.',
+            'code' => $code,
+            'expire_at' => $expireAt->toISOString(),
+        ]);
+    }
+
+    /**
+     * Vendeur confirme sa présence avec le code
+     */
+    public function vendeurConfirmerPresence(Request $request, int $id): JsonResponse
+    {
+        $vendeur = $request->user()->vendeur;
+
+        $request->validate([
+            'code' => ['required', 'string', 'size:6'],
+        ]);
+
+        $rapport = RapportInspection::with(['garage', 'annonce'])
+            ->whereHas('annonce', function ($q) use ($vendeur) {
+                $q->where('vendeur_id', $vendeur->id);
+            })
+            ->findOrFail($id);
+
+        if (is_null($rapport->code_presence)) {
+            return response()->json([
+                'message' => 'Aucun code de présence n\'a été généré pour cette inspection.'
+            ], 422);
+        }
+
+        if (strtoupper($request->code) !== $rapport->code_presence) {
+            return response()->json([
+                'message' => 'Le code saisi est incorrect.'
+            ], 422);
+        }
+
+        if (now()->isAfter($rapport->code_expire_at)) {
+            return response()->json([
+                'message' => 'Le code a expiré. Demandez au garage de générer un nouveau code.'
+            ], 422);
+        }
+
+        if ($rapport->presence_confirmee) {
+            return response()->json([
+                'message' => 'Votre présence a déjà été confirmée.'
+            ], 422);
+        }
+
+        $rapport->update([
+            'presence_confirmee' => true,
+        ]);
+
+        // Notifier le garage
+        Notification::create([
+            'destinataire_id' => $rapport->garage->user_id ?? null,
+            'type' => 'PRESENCE_CONFIRMEE',
+            'titre' => 'Présence confirmée',
+            'message' => "Le vendeur {$request->user()->nom} a confirmé sa présence. Vous pouvez maintenant inspecter le véhicule.",
+            'lien' => "/garage/inspections/{$id}",
+            'lu' => false,
+        ]);
+
+        return response()->json([
+            'message' => 'Votre présence a été confirmée avec succès.',
+            'rapport' => $rapport->fresh(['garage', 'annonce']),
         ]);
     }
 

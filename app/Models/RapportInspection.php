@@ -14,6 +14,10 @@ class RapportInspection extends Model
         'garage_id',
         'date_rdv',
         'heure_rdv',
+        'code_presence',
+        'code_expire_at',
+        'presence_confirmee',
+        'code_genere_at',
         'statut',
         'date_soumission',
         'date_inspection',
@@ -23,6 +27,7 @@ class RapportInspection extends Model
         'etat_pneus',
         'kilometrage_verifie',
         'observations',
+        'photos_inspection',
         'date_validation',
     ];
 
@@ -30,7 +35,11 @@ class RapportInspection extends Model
         'date_inspection' => 'datetime',
         'date_soumission' => 'datetime',
         'date_validation' => 'datetime',
+        'code_expire_at' => 'datetime',
+        'code_genere_at' => 'datetime',
+        'presence_confirmee' => 'boolean',
         'kilometrage_verifie' => 'integer',
+        'photos_inspection' => 'array',
     ];
 
     public function annonce()

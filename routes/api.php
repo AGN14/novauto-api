@@ -141,6 +141,7 @@ Route::prefix('garage')->group(function () {
 
         // Gestion des inspections
         Route::get('/inspections', [InspectionController::class, 'demandesEnAttente']);
+        Route::post('/inspections/{id}/generer-code', [InspectionController::class, 'garageGenererCode']);
         Route::post('/inspections/{id}/soumettre', [InspectionController::class, 'soumettreRapport']);
         Route::post('/inspections/{id}/rejeter', [InspectionController::class, 'rejeterInspection']);
 
@@ -159,5 +160,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('vendeur')->group(function () {
         Route::post('/inspections',     [InspectionController::class, 'demanderInspection']);
         Route::get('/inspections',      [InspectionController::class, 'mesInspections']);
+        Route::post('/inspections/{id}/confirmer-presence', [InspectionController::class, 'vendeurConfirmerPresence']);
     });
 });
