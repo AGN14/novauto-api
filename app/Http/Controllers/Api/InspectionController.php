@@ -192,6 +192,16 @@ class InspectionController extends Controller
             ], 422);
         }
 
+        // Vérifier que la date/heure du RDV est atteinte
+        if ($rapport->date_rdv && $rapport->heure_rdv) {
+            $rdvDatetime = \Carbon\Carbon::parse($rapport->date_rdv->format('Y-m-d') . ' ' . $rapport->heure_rdv);
+            if (now()->isBefore($rdvDatetime)) {
+                return response()->json([
+                    'message' => "Vous ne pouvez pas générer le code avant la date et l'heure du rendez-vous ({$rapport->date_rdv->format('d/m/Y')} à " . substr($rapport->heure_rdv, 0, 5) . ")."
+                ], 422);
+            }
+        }
+
         // Générer un code aléatoire de 6 caractères alphanumériques
         $code = strtoupper(substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZ23456789'), 0, 6));
 
@@ -264,16 +274,6 @@ class InspectionController extends Controller
 
         $rapport->update([
             'presence_confirmee' => true,
-        ]);
-
-        // Notifier le garage
-        Notification::create([
-            'destinataire_id' => $rapport->garage->user_id ?? null,
-            'type' => 'PRESENCE_CONFIRMEE',
-            'titre' => 'Présence confirmée',
-            'message' => "Le vendeur {$request->user()->nom} a confirmé sa présence. Vous pouvez maintenant inspecter le véhicule.",
-            'lien' => "/garage/inspections/{$id}",
-            'lu' => false,
         ]);
 
         return response()->json([
