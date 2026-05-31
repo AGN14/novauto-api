@@ -194,11 +194,23 @@ class InspectionController extends Controller
 
         // Vérifier que la date/heure du RDV est atteinte
         if ($rapport->date_rdv && $rapport->heure_rdv) {
-            $rdvDatetime = \Carbon\Carbon::parse($rapport->date_rdv->format('Y-m-d') . ' ' . $rapport->heure_rdv);
-            if (now()->isBefore($rdvDatetime)) {
-                return response()->json([
-                    'message' => "Vous ne pouvez pas générer le code avant la date et l'heure du rendez-vous ({$rapport->date_rdv->format('d/m/Y')} à " . substr($rapport->heure_rdv, 0, 5) . ")."
-                ], 422);
+            try {
+                $dateStr = $rapport->date_rdv instanceof \Carbon\Carbon
+                    ? $rapport->date_rdv->format('Y-m-d')
+                    : \Carbon\Carbon::parse($rapport->date_rdv)->format('Y-m-d');
+
+                $heureStr = substr($rapport->heure_rdv, 0, 5); // Prend "14:00" depuis "14:00:00"
+
+                $rdvDatetime = \Carbon\Carbon::parse("{$dateStr} {$heureStr}");
+
+                if (now()->isBefore($rdvDatetime)) {
+                    return response()->json([
+                        'message' => "Vous ne pouvez pas générer le code avant la date et l'heure du rendez-vous ({$dateStr} à {$heureStr})."
+                    ], 422);
+                }
+            } catch (\Exception $e) {
+                // Si parsing échoue, on laisse passer
+                \Log::warning('Erreur parsing date RDV inspection: ' . $e->getMessage());
             }
         }
 
