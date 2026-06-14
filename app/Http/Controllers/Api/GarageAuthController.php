@@ -28,7 +28,6 @@ class GarageAuthController extends Controller
             ]);
         }
 
-        // Vérifier que le garage est agréé
         if (!$garage->agree) {
             return response()->json([
                 'message' => 'Votre compte garage n\'est pas encore agréé par l\'administration.'
@@ -49,6 +48,25 @@ class GarageAuthController extends Controller
     public function me(Request $request)
     {
         return response()->json($request->user());
+    }
+
+    /**
+     * Mettre à jour le prix d'inspection
+     */
+    public function updateProfil(Request $request)
+    {
+        $garage = $request->user();
+
+        $validated = $request->validate([
+            'prix_inspection' => ['required', 'numeric', 'min:500', 'max:100000'],
+        ]);
+
+        $garage->update($validated);
+
+        return response()->json([
+            'message' => 'Prix d\'inspection mis à jour.',
+            'garage'  => $garage->fresh(),
+        ]);
     }
 
     /**

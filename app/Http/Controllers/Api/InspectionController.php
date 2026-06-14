@@ -278,9 +278,22 @@ class InspectionController extends Controller
             ], 422);
         }
 
-        if ($rapport->presence_confirmee) {
+        // Vérifier que la présence du vendeur est confirmée
+        if (!$rapport->presence_confirmee) {
             return response()->json([
-                'message' => 'Votre présence a déjà été confirmée.'
+                'message' => 'La présence du vendeur doit être confirmée avant de soumettre le rapport.'
+            ], 422);
+        }
+
+        // Vérifier que le paiement de l'inspection est approuvé
+        $paiementInspection = \App\Models\Paiement::where('rapport_inspection_id', $rapport->id)
+            ->where('type', 'INSPECTION')
+            ->where('statut', 'APPROUVE')
+            ->first();
+
+        if (!$paiementInspection) {
+            return response()->json([
+                'message' => 'Le paiement de l\'inspection doit être effectué avant de soumettre le rapport.'
             ], 422);
         }
 
