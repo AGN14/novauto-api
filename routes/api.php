@@ -105,6 +105,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/inspections',                              [InspectionController::class, 'demanderInspection']);
         Route::get('/inspections',                               [InspectionController::class, 'mesInspections']);
         Route::post('/inspections/{id}/confirmer-presence',      [InspectionController::class, 'vendeurConfirmerPresence']);
+        Route::put('/profil', [AuthController::class, 'updateProfil']);
     });
 
     // Notifications
