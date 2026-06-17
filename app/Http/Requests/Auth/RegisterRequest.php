@@ -30,6 +30,9 @@ class RegisterRequest extends FormRequest
             $rules['nom_structure']     = ['required', 'string', 'max:255'];
             $rules['adresse_structure'] = ['required', 'string'];
             $rules['rccm']              = ['required', 'string', 'max:50'];
+            $rules['type_structure']    = ['required', 'in:PARC_AUTO,CONCESSIONNAIRE'];
+            $rules['latitude']          = ['nullable', 'numeric'];
+            $rules['longitude']         = ['nullable', 'numeric'];
         }
 
         return $rules;
@@ -55,6 +58,8 @@ class RegisterRequest extends FormRequest
             'nom_structure.required'     => 'Le nom de la structure est obligatoire.',
             'adresse_structure.required' => 'L\'adresse de la structure est obligatoire.',
             'rccm.required'              => 'Le numéro RCCM est obligatoire.',
+            'type_structure.required'    => 'Veuillez sélectionner le type de structure.',
+            'type_structure.in'          => 'Le type de structure est invalide.',
         ];
     }
 }

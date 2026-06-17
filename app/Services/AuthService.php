@@ -36,15 +36,22 @@ class AuthService
                 'nom_structure'     => $data['nom_structure'] ?? null,
                 'adresse_structure' => $data['adresse_structure'] ?? null,
                 'rccm'              => $data['rccm'] ?? null,
+                'type_structure'    => $data['type_structure'] ?? null,
+                'latitude'          => $data['latitude'] ?? null,
+                'longitude'         => $data['longitude'] ?? null,
             ]);
         }
 
-        Mail::to($user->email)->send(new WelcomeMail($user));
+        try {
+            Mail::to($user->email)->send(new WelcomeMail($user));
+        } catch (\Exception $e) {
+            \Log::error('Erreur envoi email bienvenue: ' . $e->getMessage());
+        }
 
         $token = $user->createToken('novauto_token')->plainTextToken;
 
         return [
-            'message' => 'Compte cree avec succes.',
+            'message' => 'Compte créé avec succès.',
             'token'   => $token,
             'user'    => $this->formatUser($user),
         ];
@@ -64,7 +71,7 @@ class AuthService
         $token = $user->createToken('novauto_token')->plainTextToken;
 
         return [
-            'message' => 'Connexion reussie.',
+            'message' => 'Connexion réussie.',
             'token'   => $token,
             'user'    => $this->formatUser($user),
         ];
@@ -103,7 +110,6 @@ class AuthService
         ])->save();
 
         Password::deleteToken($user);
-
         $user->tokens()->delete();
 
         return ['message' => 'Mot de passe réinitialisé avec succès.'];

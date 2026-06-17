@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
@@ -7,8 +6,10 @@ use App\Models\Annonce;
 use App\Models\User;
 use App\Models\Vendeur;
 use App\Models\GaragePartenaire;
+use App\Mail\GarageApprouveMail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
@@ -29,7 +30,6 @@ class AdminController extends Controller
         $annonces = Annonce::with(['vehicule.modele.marque', 'vendeur.user'])
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 15));
-
         return response()->json($annonces);
     }
 
@@ -38,7 +38,6 @@ class AdminController extends Controller
         $vendeurs = Vendeur::with(['user'])
             ->orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 15));
-
         return response()->json($vendeurs);
     }
 
@@ -69,50 +68,80 @@ class AdminController extends Controller
         return response()->json(['message' => 'Vendeur suspendu.']);
     }
 
-    /**
-     * Liste des garages partenaires
-     */
     public function garages(Request $request): JsonResponse
     {
         $garages = GaragePartenaire::orderBy('created_at', 'desc')
             ->paginate($request->get('per_page', 15));
-
         return response()->json($garages);
     }
 
-    /**
-     * Certifier un garage partenaire
-     */
     public function certifierGarage(int $id): JsonResponse
     {
         $garage = GaragePartenaire::findOrFail($id);
-
         $garage->update([
-            'certifie' => true,
+            'certifie'           => true,
             'date_certification' => now(),
         ]);
-
         return response()->json([
             'message' => 'Garage certifié avec succès.',
-            'garage' => $garage,
+            'garage'  => $garage,
         ]);
     }
 
-    /**
-     * Suspendre/Révoquer la certification d'un garage
-     */
     public function suspendreGarage(int $id): JsonResponse
+    {
+        $garage = GaragePartenaire::findOrFail($id);
+        $garage->update([
+            'certifie'           => false,
+            'date_certification' => null,
+        ]);
+        return response()->json([
+            'message' => 'Certification du garage révoquée.',
+            'garage'  => $garage,
+        ]);
+    }
+
+    public function approuverGarage(int $id): JsonResponse
     {
         $garage = GaragePartenaire::findOrFail($id);
 
         $garage->update([
-            'certifie' => false,
-            'date_certification' => null,
+            'agree'           => true,
+            'statut_demande'  => 'APPROUVEE',
+            'date_agrement'   => now(),
+            'message_demande' => null,
+        ]);
+
+        // Envoyer email de confirmation
+        try {
+            Mail::to($garage->email)->send(new GarageApprouveMail($garage->fresh()));
+        } catch (\Exception $e) {
+            \Log::error('Erreur envoi email garage approuvé: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'message' => 'Demande du garage approuvée. Le garage peut maintenant se connecter.',
+            'garage'  => $garage->fresh(),
+        ]);
+    }
+
+    public function rejeterGarage(Request $request, int $id): JsonResponse
+    {
+        $request->validate([
+            'motif' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $garage = GaragePartenaire::findOrFail($id);
+
+        $garage->update([
+            'agree'           => false,
+            'statut_demande'  => 'REJETEE',
+            'message_demande' => $request->motif,
         ]);
 
         return response()->json([
-            'message' => 'Certification du garage révoquée.',
-            'garage' => $garage,
+            'message' => 'Demande du garage rejetée.',
+            'garage'  => $garage,
         ]);
     }
 }

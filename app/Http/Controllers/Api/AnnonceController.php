@@ -69,6 +69,7 @@ class AnnonceController extends Controller
         $annonce = Annonce::with([
             'vehicule.modele.marque',
             'vehicule.rapportInspection.garage',
+            'vendeur',
             'vendeur.user',
         ])->findOrFail($id);
 

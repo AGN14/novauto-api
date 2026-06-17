@@ -127,7 +127,7 @@
             <div class="logo">
                 <span class="logo-nova">NOV</span><span class="logo-auto">AUTO</span>
             </div>
-            <div class="tagline">Plateforme Automobile Premium du Bénin</div>
+            <div class="tagline">Plateforme Facilitant la vente et l'achat de véhicules au Bénin</div>
         </div>
 
         <!-- Content -->

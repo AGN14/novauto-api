@@ -140,11 +140,14 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/avis/signales',                  [AvisController::class, 'avisSignales']);
     Route::post('/avis/{id}/supprimer',           [AvisController::class, 'supprimerAvis']);
     Route::post('/avis/{id}/rejeter-signalement', [AvisController::class, 'rejeterSignalement']);
+    Route::post('/garages/{id}/approuver', [AdminController::class, 'approuverGarage']);
+    Route::post('/garages/{id}/rejeter',   [AdminController::class, 'rejeterGarage']);
 });
 
 // Garage Partenaire
 Route::prefix('garage')->group(function () {
-    Route::post('/login', [GarageAuthController::class, 'login']);
+    Route::post('/login',       [GarageAuthController::class, 'login']);
+    Route::post('/inscription', [GarageAuthController::class, 'inscription']); // ← ici, public
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me',      [GarageAuthController::class, 'me']);
@@ -161,4 +164,5 @@ Route::prefix('garage')->group(function () {
         Route::post('/disponibilites/batch',            [DisponibiliteController::class, 'creerDisponibilitesGarageBatch']);
         Route::delete('/disponibilites/{id}',           [DisponibiliteController::class, 'supprimerDisponibiliteGarage']);
     });
+
 });

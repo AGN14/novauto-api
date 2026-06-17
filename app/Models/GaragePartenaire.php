@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
@@ -25,6 +23,10 @@ class GaragePartenaire extends Authenticatable
         'date_certification',
         'prix_inspection',
         'photo_profil',
+        'statut_demande',
+        'message_demande',
+        'latitude',
+        'longitude',
     ];
 
     protected $hidden = [
@@ -32,12 +34,14 @@ class GaragePartenaire extends Authenticatable
     ];
 
     protected $casts = [
-        'agree' => 'boolean',
-        'certifie' => 'boolean',
-        'date_agrement' => 'datetime',
+        'agree'              => 'boolean',
+        'certifie'           => 'boolean',
+        'date_agrement'      => 'datetime',
         'date_certification' => 'datetime',
-        'prix_inspection' => 'decimal:2',
-        'password' => 'hashed',
+        'prix_inspection'    => 'decimal:2',
+        'password'           => 'hashed',
+        'latitude'           => 'decimal:7',
+        'longitude'          => 'decimal:7',
     ];
 
     public function getAuthPassword()
