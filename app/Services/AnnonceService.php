@@ -33,10 +33,10 @@ class AnnonceService
         $modele = Modele::firstOrCreate(
             [
                 'marque_id' => $marque->id,
-                'nom' => $modeleNom
+                'nom'       => $modeleNom
             ],
             [
-                'carburant' => $data['carburant'] ?? null,
+                'carburant'    => $data['carburant'] ?? null,
                 'transmission' => $data['transmission'] ?? null,
             ]
         );
@@ -65,7 +65,7 @@ class AnnonceService
             'photos'              => $data['photos'],
             'description'         => $data['description'] ?? null,
             'equipements'         => $data['equipements'] ?? [],
-            'ville'               => $data['ville'] ?? null,
+            'ville'               => $data['ville'] ?? 'Cotonou',
         ]);
 
         return $annonce->load(['vehicule.modele.marque']);
